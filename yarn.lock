@@ -2698,7 +2698,7 @@ datastore-core@10.0.0, datastore-core@^10.0.0:
     it-sort "^3.0.4"
     it-take "^3.0.4"
 
-datastore-core@^9.2.9:
+datastore-core@^9.0.0, datastore-core@^9.2.9:
   version "9.2.9"
   resolved "https://registry.yarnpkg.com/datastore-core/-/datastore-core-9.2.9.tgz#74b4dd53d4597b59038488ba5f92a7f81769f8df"
   integrity sha512-wraWTPsbtdE7FFaVo3pwPuTB/zXsgwGGAm8BgBYwYAuzZCTS0MfXmd/HH1vR9s0/NFFjOVmBkGiWCvKxZ+QjVw==
@@ -4220,10 +4220,10 @@ jackspeak@^2.3.5:
   optionalDependencies:
     "@pkgjs/parseargs" "^0.11.0"
 
-js-ds-crdt@^0.0.22:
-  version "0.0.22"
-  resolved "https://registry.yarnpkg.com/js-ds-crdt/-/js-ds-crdt-0.0.22.tgz#7804f5718c2a68853550cd68d94bd920e45979cd"
-  integrity sha512-R0DB6uHZufhcFJ3Ea4N07ioLXG0fdGljym4EDxwGK4n728uzuhPdnxUfPcWXGz0Z0HwNxcSdzf2tFr+tkW0fcQ==
+js-ds-crdt@^0.0.28:
+  version "0.0.28"
+  resolved "https://registry.yarnpkg.com/js-ds-crdt/-/js-ds-crdt-0.0.28.tgz#cc3f62ca4c10325a657bc59787af869fc9982be5"
+  integrity sha512-oGYKQug4/kVVx1NWm4BW2ETePCwR7DqYpITO+njBdLATJklJ6WXbgs7nSeg6OeCkZRcheYWHtgA/UwZEvc6L9g==
   dependencies:
     "@chainsafe/libp2p-gossipsub" "^13.1.1"
     "@chainsafe/libp2p-noise" "^15.1.1"
@@ -4234,7 +4234,7 @@ js-ds-crdt@^0.0.22:
     "@libp2p/logger" "^4.0.20"
     "@multiformats/multiaddr" "^12.3.0"
     async-mutex "^0.5.0"
-    datastore-core "^10.0.0"
+    datastore-core "^9.0.0"
     helia "^4.2.5"
     interface-blockstore "^5.3.0"
     interface-datastore "^8.3.0"
@@ -4380,6 +4380,11 @@ lodash.mergewith@4.6.2:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/lodash.mergewith/-/lodash.mergewith-4.6.2.tgz#617121f89ac55f59047c7aec1ccd6654c6590f55"
   integrity sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==
+
+lodash@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
   version "1.4.0"

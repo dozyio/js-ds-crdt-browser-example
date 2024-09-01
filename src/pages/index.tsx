@@ -225,7 +225,12 @@ export default function Home() {
   useEffect(() => {
     const evtProcessor = async (e: any) => {
       console.log('evt', e)
-      await updateDsList()
+
+      // Add a 200ms delay before running updateDsList
+      // to allow bitswap to get the data
+      setTimeout(async () => {
+        await updateDsList()
+      }, 200)
     }
 
     document.addEventListener('dsupdate', evtProcessor)
@@ -234,7 +239,6 @@ export default function Home() {
       document.removeEventListener('dsupdate', evtProcessor)
     }
   }, [updateDsList])
-
 
   return (
     <>
@@ -255,8 +259,6 @@ export default function Home() {
             />
             <Button onClick={handleConnect}>Connect</Button>
           </Box>
-
-
           <Box>
             Key: <Input value={dsKey}
               onChange={handleKeyChange} />

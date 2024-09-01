@@ -32,8 +32,9 @@
     "framer-motion": "^11.3.30",
     "helia": "^4.2.5",
     "interface-datastore": "^8.3.0",
-    "js-ds-crdt": "^0.0.22",
+    "js-ds-crdt": "^0.0.28",
     "libp2p": "^1.9.2",
+    "lodash": "^4.17.21",
     "next": "14.2.7",
     "react": "^18",
     "react-dom": "^18"
