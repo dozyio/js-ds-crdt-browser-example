@@ -83,10 +83,6 @@ export default function Home() {
       connectionGater: {
         denyDialMultiaddr: async () => false,
       },
-      connectionMonitor: {
-        // reenable after https://github.com/libp2p/js-libp2p/pull/2671
-        enabled: false,
-      },
       connectionManager: {
         minConnections: 1
       },
