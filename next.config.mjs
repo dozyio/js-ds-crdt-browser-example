@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
-  pageExtensions: ['page.tsx', 'page.ts'],
   output: 'export',
   images: {
     unoptimized: true,
