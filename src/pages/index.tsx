@@ -51,8 +51,8 @@ const topic = process.env.NEXT_PUBLIC_TOPIC
 const dhtPrefix = process.env.NEXT_PUBLIC_DHT_PREFIX
 const delegatedRouterUrl = process.env.NEXT_PUBLIC_DELEGATED_ROUTER
 
-const textareaKey = '/textarea'
-const caTextareaKey = '/catextarea'
+const textareaKey = '/textarea1'
+const caTextareaKey = '/catextarea1'
 
 export default function Home() {
   const router = useRouter();
