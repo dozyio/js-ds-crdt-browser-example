@@ -23,21 +23,23 @@ import { webSockets } from "@libp2p/websockets";
 import * as filters from '@libp2p/websockets/filters'
 import { webTransport } from "@libp2p/webtransport";
 import { Multiaddr, multiaddr } from '@multiformats/multiaddr'
+import { instance } from "@viz-js/viz";
 import { IDBBlockstore } from 'blockstore-idb'
 import { IDBDatastore } from 'datastore-idb'
 import { createHelia, type HeliaLibp2p } from 'helia'
 import { type Blockstore } from 'interface-blockstore'
 import { Key, Pair, type Datastore } from 'interface-datastore'
 import first from 'it-first'
-import { CRDTDatastore, CRDTLibp2pServices, defaultOptions, msgIdFnStrictNoSign, Options, PubSubBroadcaster } from "js-ds-crdt";
+import { CRDTDatastore, CRDTLibp2pServices, defaultOptions, Heads, msgIdFnStrictNoSign, Options, PubSubBroadcaster } from "js-ds-crdt";
 import { createLibp2p } from 'libp2p'
 import { isEqual } from 'lodash'
 import { debounce } from 'lodash';
 import { CID } from "multiformats";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import React from "react";
+
 // import debug from 'weald'
 
 let isLibp2pInitialized = false;
@@ -55,11 +57,13 @@ const textareaKey = '/textarea1'
 const caTextareaKey = '/catextarea1'
 
 export default function Home() {
-  const router = useRouter();
-  const { ma: pairMultiaddrs, c: pairCode } = router.query
+  const graphRef = useRef(null);
 
   const [ds, setDs] = useState<CRDTDatastore | null>(null)
+  const [heads, setHeads] = useState<CID[] | undefined>(undefined)
+  const [height, setHeight] = useState<bigint | undefined>(undefined)
   const [stringEncoder, setStringEncoder] = useState<Strings | undefined>(undefined)
+  const [graph, setGraph] = useState<string>('')
   const [error, setError] = useState<any>(null);
 
   const [dsKey, setDsKey] = useState('')
@@ -202,10 +206,6 @@ export default function Home() {
     }
   }, [ds]);
 
-  const updateKeyHistory = useCallback(async () => {
-    const history = await ds?.keyHistory(new Key(textareaKey))
-  }, [ds])
-
   interface BootstrapsMultiaddrs {
     // Multiaddrs that are dialable from the browser
     bootstrapAddrs: string[]
@@ -213,7 +213,6 @@ export default function Home() {
     // multiaddr string representing the circuit relay v2 listen addr
     relayListenAddrs: string[]
   }
-
 
   async function getBootstrapMultiaddrs(
     client: DelegatedRoutingV1HttpApiClient,
@@ -290,28 +289,6 @@ export default function Home() {
 
     try {
       const crdtDS = await newCRDTDatastore(topic, datastore, blockstore, opts)
-
-      crdtDS.dagService.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
-        const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
-        console.log('multiaddrs', multiaddrs)
-        setBootstrapMultiaddrs(multiaddrs)
-
-        const dialable: string[] = []
-        for (const maddr of multiaddrs) {
-          const protos = maddr.protoNames()
-
-          if (
-            protos.includes('p2p-circuit') && protos.includes('webrtc')
-          ) {
-            // TODO skip ipv6 loopback
-            if (maddr.nodeAddress().address === '127.0.0.1') continue // skip loopback
-
-            dialable.push(`${maddr}/p2p/${crdtDS.dagService.libp2p.peerId.toString()}`)
-            setDialable(dialable)
-          }
-        }
-      })
-
       setDs(crdtDS)
     } catch (e: any) {
       console.log(e)
@@ -489,13 +466,17 @@ export default function Home() {
     const evtProcessor = async (e: any) => {
       console.log('evt', e)
 
+      if (!ds) {
+        return
+      }
+
       // Add a delay before running updateDsList to allow for processing
       setTimeout(async () => {
         await updateDsList()
 
         // update textarea
         if (e.detail === textareaKey) {
-          const v = await ds?.get(new Key(textareaKey))
+          const v = await ds.get(new Key(textareaKey))
           if (v !== undefined && v !== null) {
             setTextAreaValue(new TextDecoder().decode(v))
 
@@ -520,6 +501,34 @@ export default function Home() {
             setContentAddressedTextAreaValue(string)
           }
         }
+
+        const headList = await ds?.heads.list()
+        setHeads(headList?.heads)
+        setHeight(headList?.maxHeight)
+
+        let dotString = ''
+        await ds.dotDAG((data: string) => {
+          dotString += data
+        })
+
+        setGraph(graph)
+
+        const renderGraph = async () => {
+          const viz = await instance();
+
+          try {
+            const svgElement = viz.renderSVGElement(dotString)
+            if (graphRef.current) {
+              // Clear the previous graph before appending a new one
+              graphRef.current.innerHTML = '';
+              graphRef.current.appendChild(svgElement);
+            }
+          } catch (error) {
+            console.error('Error rendering the graph:', error);
+          }
+        };
+
+        renderGraph()
       }, 100)
     }
 
@@ -595,6 +604,43 @@ export default function Home() {
     }
   }, [ds, setPeers])
 
+
+  useEffect(() => {
+    const selfPeerUpdateHandler = (evt: any) => {
+      if (!ds) {
+        return
+      }
+
+      const multiaddrs = evt.detail.peer.addresses.map(({ multiaddr }: { multiaddr: Multiaddr }) => multiaddr);
+      setBootstrapMultiaddrs(multiaddrs)
+
+      const dialable: string[] = []
+      for (const maddr of multiaddrs) {
+        const protos = maddr.protoNames()
+
+        if (
+          protos.includes('p2p-circuit') && protos.includes('webrtc')
+        ) {
+          // TODO skip ipv6 loopback
+          if (maddr.nodeAddress().address === '127.0.0.1') continue // skip loopback
+
+          dialable.push(`${maddr}/p2p/${ds.dagService.libp2p.peerId.toString()}`)
+        }
+      }
+      setDialable(dialable)
+    }
+
+    if (ds) {
+      ds.dagService.libp2p.addEventListener('self:peer:update', selfPeerUpdateHandler)
+    }
+
+    return () => {
+      if (ds) {
+        ds.dagService.libp2p.removeEventListener('self:peer:update', selfPeerUpdateHandler)
+      }
+    }
+  }, [ds])
+
   useEffect(() => {
     setIsOnline(navigator.onLine);
 
@@ -628,7 +674,7 @@ export default function Home() {
           <Container bg='red.500' color='white' p={4} w='100%'>
             {error.code && <Box>Error code: {error.code}</Box>}
             {error.message && <Box>Error message: {error.message}</Box>}
-            {error.code === 'ERR_NO_VALID_ADDRESSES' && <Box>Wait a short while before reloading the page as you are probably spamming the relay with reservation requests!</Box>}
+            {error.code === 'ERR_NO_VALID_ADDRESSES' && <Box>The relay servers maybe offline or wait a short while before reloading the page as you may be spamming the relay with reservation requests!</Box>}
           </Container>
         )}
         <Flex
@@ -693,6 +739,16 @@ export default function Home() {
               </UnorderedList>
             </Box>
             <Box>
+              <Heading as='h3'>Heads</Heading>
+              <Box>Height: {height ? height.toString() : 0}</Box>
+              {heads && heads.map((head, index) => (
+                <Box key={index}>
+                  {head.toString()}
+                </Box>
+              ))}
+            </Box>
+            <Box>
+              <Heading as='h3'>Dial a peer</Heading>
               <Input
                 value={remoteMultiaddr}
                 onChange={handleMAChange}
@@ -744,6 +800,12 @@ export default function Home() {
             </Box>
           </Container>
         </Flex>
+        <Box>
+          <Heading as='h3'>Graph</Heading>
+          <Center>
+            <Box maxW='100%' overflow='scroll' ref={graphRef}></Box>
+          </Center>
+        </Box>
       </main>
     </>
   );

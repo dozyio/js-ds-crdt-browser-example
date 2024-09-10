@@ -31,6 +31,7 @@
     "@libp2p/websockets": "^8.2.0",
     "@libp2p/webtransport": "^4.1.7",
     "@multiformats/multiaddr": "^12.3.0",
+    "@viz-js/viz": "^3.8.0",
     "blockstore-core": "^5.0.0",
     "blockstore-idb": "^2.0.0",
     "datastore-core": "^10.0.0",
