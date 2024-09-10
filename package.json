@@ -39,7 +39,7 @@
     "helia": "^4.2.5",
     "interface-datastore": "^8.3.0",
     "it-first": "^3.0.6",
-    "js-ds-crdt": "^0.0.29",
+    "js-ds-crdt": "^0.0.32",
     "libp2p": "^1.9.3",
     "lodash": "^4.17.21",
     "next": "14.2.7",
