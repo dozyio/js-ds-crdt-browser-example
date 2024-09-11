@@ -56,7 +56,7 @@ const textareaKey = '/textarea1'
 const caTextareaKey = '/catextarea1'
 
 export default function Home() {
-  const graphRef = useRef(null);
+  const graphRef = useRef<HTMLDivElement>(null);
 
   const [ds, setDs] = useState<CRDTDatastore | null>(null)
   const [heads, setHeads] = useState<CID[] | undefined>(undefined)
