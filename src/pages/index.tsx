@@ -36,7 +36,6 @@ import { isEqual } from 'lodash'
 import { debounce } from 'lodash';
 import { CID } from "multiformats";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import React from "react";
 
@@ -62,6 +61,8 @@ export default function Home() {
   const [ds, setDs] = useState<CRDTDatastore | null>(null)
   const [heads, setHeads] = useState<CID[] | undefined>(undefined)
   const [height, setHeight] = useState<bigint | undefined>(undefined)
+  const [queuedJobs, setQueuedJobs] = useState<number>(0)
+  const [isDirty, setIsDirty] = useState<boolean>(false)
   const [stringEncoder, setStringEncoder] = useState<Strings | undefined>(undefined)
   const [graph, setGraph] = useState<string>('')
   const [error, setError] = useState<any>(null);
@@ -381,6 +382,7 @@ export default function Home() {
 
   const debouncedPut = React.useRef(
     debounce(async (ds: CRDTDatastore | null, key: Key, value: string) => {
+      console.log('Debounced Put ', key.toString(), value)
       const v = new TextEncoder().encode(value);
       await ds?.put(key, v);
     }, 500)
@@ -501,10 +503,6 @@ export default function Home() {
             setContentAddressedTextAreaValue(string)
           }
         }
-
-        const headList = await ds?.heads.list()
-        setHeads(headList?.heads)
-        setHeight(headList?.maxHeight)
 
         let dotString = ''
         await ds.dotDAG((data: string) => {
@@ -642,6 +640,36 @@ export default function Home() {
   }, [ds])
 
   useEffect(() => {
+    const init = async () => {
+      if (!ds) {
+        return
+      }
+
+      setIsDirty(await ds.isDirty())
+    }
+
+    init()
+  }, [ds])
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!ds?.dagService.libp2p || (ds.dagService.libp2p && ds.dagService.libp2p.status !== 'started')) {
+        return
+      }
+
+      const stats = await ds.internalStats()
+      setHeads(stats?.heads)
+      setHeight(stats?.maxHeight)
+      setQueuedJobs(stats?.queuedJobs)
+      console.log('stats', stats)
+    }, 2000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [ds])
+
+  useEffect(() => {
     setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);
@@ -739,13 +767,18 @@ export default function Home() {
               </UnorderedList>
             </Box>
             <Box>
-              <Heading as='h3'>Heads</Heading>
+              <Heading as='h3'>DAG</Heading>
               <Box>Height: {height ? height.toString() : 0}</Box>
-              {heads && heads.map((head, index) => (
-                <Box key={index}>
-                  {head.toString()}
-                </Box>
-              ))}
+              <Box>Heads:</Box>
+              <UnorderedList>
+                {heads && heads.map((head, index) => (
+                  <ListItem key={index}>
+                    {head.toString()}
+                  </ListItem>
+                ))}
+              </UnorderedList>
+              <Box>Dirty: {isDirty ? "Yes" : "No"}</Box>
+              <Box>Queued Jobs: {queuedJobs}</Box>
             </Box>
             <Box>
               <Heading as='h3'>Dial a peer</Heading>
