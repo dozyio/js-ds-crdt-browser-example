@@ -285,7 +285,6 @@ export default function Home() {
         document.dispatchEvent(event);
       },
       loggerPrefix: 'crdt',
-      bloomFilter: null // remove after https://github.com/libp2p/js-libp2p/pull/2687
     }
 
     try {
